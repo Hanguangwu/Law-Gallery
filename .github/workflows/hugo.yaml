@@ -1,0 +1,51 @@
+# Hugo static site deploy to GitHub Pages
+name: hugo-deploy
+
+on:
+  push:
+    paths-ignore:
+      - "images/**"
+      - "LICENSE"
+      - "README.md"
+    branches:
+      - main
+  workflow_dispatch:
+
+# Grant write access so the deploy action can push to gh-pages branch
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      # Sync theme submodule to latest remote commit (avoids stale pinned commit)
+      - name: Update theme submodule
+        run: git submodule update --init --recursive --remote
+
+      - name: Setup Hugo (Extended)
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "latest"
+          extended: true
+
+      - name: Build static site
+        run: hugo --theme=gallery --buildDrafts --gc --minify
+
+      # Sanity check: fail early if build produced no output
+      - name: Verify build output
+        run: 'test -d public && test -f public/index.html || { echo "ERROR: public/index.html not found"; exit 1; }'
+
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          # Uncomment the next line after you configure the custom domain in repo Settings → Pages:
+          # cname: your-custom-domain.com

@@ -1,0 +1,4 @@
+baseURL = 'https://hanguangwu.github.io/Law-Gallery'
+languageCode = 'zh-cn'
+title = 'Law-Gallery'
+theme = 'gallery'
